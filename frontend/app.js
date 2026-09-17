@@ -125,7 +125,7 @@ async function indexNewImages() {
     indexBtn.textContent = "Indexing... This may take a while.";
     
     try {
-        const response = await fetch(`${API_URL}/index`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/index_remote`, { method: 'POST' });
         const data = await response.json();
         
         alert(data.message);
