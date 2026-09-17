@@ -90,11 +90,7 @@ def trigger_indexing():
 
 @app.post("/index_remote")
 def index_remote_dataset(max_images: int = 100):
-    """
-    Streams images from a massive open-source dataset.
-    We'll use 'conceptual_captions' (a massive Google dataset of images and text)
-    in streaming mode, so we don't have to download the whole terabyte dataset!
-    """
+
     print("Connecting to Hugging Face dataset stream...")
     
     # Streaming=True means we process it on-the-fly without downloading the massive dataset
