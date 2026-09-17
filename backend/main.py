@@ -4,7 +4,11 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 import os
+import requests
 
+from io import BytesIO
+from PIL import Image
+from datasets import load_dataset
 from encoder import CLIPEncoder
 from vector_store import FAISSVectorStore
 
@@ -83,6 +87,62 @@ def trigger_indexing():
             indexed_count += 1
             
     return {"message": f"Successfully indexed {indexed_count} new images."}
+
+@app.post("/index_remote")
+def index_remote_dataset(max_images: int = 100):
+    """
+    Streams images from a massive open-source dataset.
+    We'll use 'conceptual_captions' (a massive Google dataset of images and text)
+    in streaming mode, so we don't have to download the whole terabyte dataset!
+    """
+    print("Connecting to Hugging Face dataset stream...")
+    
+    # Streaming=True means we process it on-the-fly without downloading the massive dataset
+    dataset = load_dataset("conceptual_captions", split="train", streaming=True)
+    
+    indexed_count = 0
+    failed_count = 0
+    
+    for row in dataset:
+        if indexed_count >= max_images:
+            break
+            
+        image_url = row['image_url']
+        
+        try:
+            # 1. Fetch image into RAM (Timeout after 3 seconds to skip dead links)
+            response = requests.get(image_url, timeout=3)
+            if response.status_code != 200:
+                continue
+                
+            image = Image.open(BytesIO(response.content)).convert("RGB")
+            
+            # 2. Pass the in-memory PIL image directly to our CLIP encoder
+            # (We need to quickly update our encode_image method to accept PIL objects directly)
+            inputs = encoder.processor(images=image, return_tensors="pt").to(encoder.device)
+            with torch.no_grad():
+                image_features = encoder.model.get_image_features(**inputs)
+            import torch.nn.functional as F
+            emb = F.normalize(image_features, p=2, dim=-1).cpu().numpy().flatten().tolist()
+            
+            # 3. Save to FAISS with the remote URL as metadata
+            meta = {
+                "url": image_url,
+                "source": "conceptual_captions"
+            }
+            vector_store.add_image(emb, meta)
+            indexed_count += 1
+            print(f"Indexed {indexed_count}/{max_images}: {image_url}")
+            
+        except Exception as e:
+            failed_count += 1
+            # Many URLs in open datasets die over time; we just silently skip them
+            continue
+            
+    return {
+        "message": f"Successfully indexed {indexed_count} remote images.",
+        "dead_links_skipped": failed_count
+    }
 
 @app.get("/image")
 def get_image(filename: str = Query(..., description="Exact filename of the image")):
