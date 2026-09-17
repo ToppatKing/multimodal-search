@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Modal Search Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🔍 Vision Search</h1>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search for 'a dog playing in the snow'..." autocomplete="off">
+                <button id="searchBtn">Search</button>
+            </div>
+            
+            <div class="admin-controls">
+                <button id="indexBtn">Index New Images</button>
+                <span id="statsLabel">0 images in database</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="statusMessage" class="status-message"></div>
+        <div id="imageGrid" class="mosaic-grid">
+            <!-- Image cards will be injected here by JS -->
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
