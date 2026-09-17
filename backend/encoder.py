@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
+from typing import Union, List
 
 class CLIPEncoder:
     def __init__(self, model_name: str = "openai/clip-vit-base-patch32"):
@@ -18,12 +19,17 @@ class CLIPEncoder:
         
         print("CLIP model loaded successfully.")
 
-    def encode_image(self, image_path: str) -> list[float]:
+    def encode_image(self, image_input: Union[str, Image.Image]) -> List[float]:
         """
-        Opens an image, processes it, and generates a 512-dim L2-normalized vector.
+        Processes an image (either a file path or PIL Image object) 
+        and generates a 512-dim L2-normalized vector.
         """
         try:
-            image = Image.open(image_path).convert("RGB")
+            if isinstance(image_input, str):
+                image = Image.open(image_input).convert("RGB")
+            else:
+                image = image_input.convert("RGB")
+
             inputs = self.processor(images=image, return_tensors="pt").to(self.device)
             
             with torch.no_grad():
@@ -34,10 +40,10 @@ class CLIPEncoder:
             return image_features.cpu().numpy().flatten().tolist()
         
         except Exception as e:
-            print(f"Error encoding image {image_path}: {e}")
+            print(f"Error encoding image: {e}")
             return None
 
-    def encode_text(self, text: str) -> list[float]:
+    def encode_text(self, text: str) -> List[float]:
         """
         Processes text and generates a 512-dim L2-normalized vector.
         """
