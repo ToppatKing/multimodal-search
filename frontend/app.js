@@ -79,6 +79,7 @@ async function performSearch() {
  */
 function renderResults(results) {
     statusMessage.textContent = "";
+    imageGrid.innerHTML = ""; // Clear previous results
 
     if (results.length === 0) {
         statusMessage.textContent = "No visually similar images found.";
@@ -90,19 +91,24 @@ function renderResults(results) {
         card.className = 'image-card';
 
         const img = document.createElement('img');
-        // Tell the browser to load the image through our FastAPI GET endpoint
-        img.src = `${API_URL}/image?filename=${encodeURIComponent(result.filename)}`;
-        img.loading = "lazy"; // Prevents loading off-screen images immediately
+        
+        // CHANGED: Use the remote URL directly from the FAISS metadata!
+        // We no longer ping our own backend for the image data.
+        img.src = result.url; 
+        
+        // Fallback just in case the remote image was deleted since we indexed it
+        img.onerror = () => { img.src = 'https://via.placeholder.com/300?text=Image+Offline' };
+        img.loading = "lazy"; 
 
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
         
-        // Convert cosine similarity score (typically 0.1 to 0.4 for CLIP text-to-image) to a display metric
         const matchScore = (result.similarity_score * 100).toFixed(1);
 
         overlay.innerHTML = `
-            <div class="overlay-filename">${result.filename}</div>
+            <div class="overlay-filename">Source: ${result.source}</div>
             <div class="overlay-score">Similarity: ${matchScore}%</div>
+            <a href="${result.url}" target="_blank" style="color: white; font-size: 12px; display: block; margin-top: 5px;">View Original</a>
         `;
 
         card.appendChild(img);
