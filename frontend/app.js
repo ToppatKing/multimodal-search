@@ -1,5 +1,10 @@
-// Base URL for the FastAPI backend
-const API_URL = "http://127.0.0.1:8000";
+// Keep API requests on the page origin unless a separate local frontend serves the UI.
+const separateFrontendPorts = ["3000", "5173", "5500"];
+const isSeparateFrontend = window.location.protocol === "file:"
+    || separateFrontendPorts.includes(window.location.port);
+const API_URL = isSeparateFrontend
+    ? `http://${window.location.hostname || "127.0.0.1"}:8000`
+    : window.location.origin;
 
 // DOM Elements
 const searchInput = document.getElementById('searchInput');

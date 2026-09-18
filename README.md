@@ -25,11 +25,11 @@ pip install -r requirements.txt
 
 ```bash
 cd backend
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 **3. Start the Frontend**
 
-Simply open `frontend/index.html` in your web browser or use a local development server (like VS Code Live Server).
+Open `http://127.0.0.1:8000/` after starting the backend. You can also use a local development server (like VS Code Live Server).
 
 **4. Index Images:**
 

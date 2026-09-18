@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 import os
@@ -13,6 +14,7 @@ from vector_store import FAISSVectorStore
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 encoder = None
 vector_store = None
@@ -97,3 +99,6 @@ def index_remote_dataset(max_images: int = 100):
 @app.get("/stats")
 def get_stats():
     return vector_store.get_stats()
+
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
